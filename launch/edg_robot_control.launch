@@ -1,0 +1,19 @@
+<!-- USAGE: roslaunch edg_robot_control edg_robot_control.launch robot_ip:=10.0.0.1 -->
+<launch>
+	<arg name="robot_ip" default="10.0.0.1" />
+
+
+	<include file="$(find ur_modern_driver)/launch/ur10_bringup.launch">
+		<arg name="robot_ip" value="$(arg robot_ip)"/>
+		<arg name="use_lowbandwidth_trajectory_follower" value="true"/>
+	</include>
+
+	<include file="$(find ur10_moveit_config)/launch/ur10_moveit_planning_execution.launch">
+		<arg name="limited" value="true"/>
+	</include>
+
+	<include file="$(find ur10_moveit_config)/launch/moveit_rviz.launch">
+		<arg name="config" value="true"/>
+	</include>
+	
+</launch>
