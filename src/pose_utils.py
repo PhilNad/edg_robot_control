@@ -37,7 +37,7 @@ class poseUtilities:
         return pose
 
     #Create a pose given a XYZ position and Euler XYZ angles orientation
-    def makePose(self, position=(0.4,0,0.1), orientation=(0,0,0)):
+    def makePose(self, position=(0,0,0), orientation=(0,0,0)):
         pose = Pose()
         quat = quaternion_from_euler(radians(orientation[0]), radians(orientation[1]), radians(orientation[2]))
         pose.orientation.x = quat[0]

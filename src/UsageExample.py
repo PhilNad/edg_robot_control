@@ -5,6 +5,7 @@ import rospy
 import moveit_commander
 from math import pi
 import random
+import geometry_msgs.msg
 
 #Corobotsim's modules
 from scene_manager import sceneManager
@@ -77,6 +78,9 @@ if __name__ == "__main__":
     #Remove old collision objects from the planning scene
     sceneMan.clear()
 
+    #Add a reference frame for our attached tool
+    #addToolReferenceFrame(offset_from_flange=(0,0,0.1))
+
     #Add the table under the robot in the scene so MoveIt is aware of it.
     #Table length = 60 in., Table depth = 30 in., Table height = 36.25 in.
     #Position vectors pretty much always describes (X,Y,Z) in this order.
@@ -108,10 +112,18 @@ if __name__ == "__main__":
     wall_position = (0,0.9,0)
     sceneMan.addBoxToMoveit("wall",wall_position, wall_size)
 
-    #Open the gripper
-    #simRob.set_gripper_closing(0)
+    #Request the fingers to go to a specific position
+    robot.set_gripper_closing(100,100)
+
+    #Request a RELATIVE position
+    robot.set_relative_gripper_closing(100,100)
+
+    #Re-initialize the fingers position
+    robot.set_gripper_closing(0,0)
 
     #Go to the initial position
+    # To generate these lines of code, move manually to the desired initial
+    # position, then use PrintCurrentPose.py
     pose = Pose()
     pose.position.x = -0.420457239126
     pose.position.y = 0.000219097839434
@@ -129,4 +141,11 @@ if __name__ == "__main__":
     robot.goRelPosition(goal_pos_rel=(0,-0.1,0))
 
     #Show off your orientation skills
-    robot.goRelOrientation(wrist_1=90, wrist_2=0, wrist_3=0)
+    robot.goRelOrientation(wrist_1=-45, wrist_2=0, wrist_3=0)
+    robot.goRelOrientation(wrist_1=+45, wrist_2=0, wrist_3=0)
+
+    robot.goRelOrientation(wrist_1=0, wrist_2=-45, wrist_3=0)
+    robot.goRelOrientation(wrist_1=0, wrist_2=+45, wrist_3=0)
+
+    robot.goRelOrientation(wrist_1=0, wrist_2=0, wrist_3=-45)
+    robot.goRelOrientation(wrist_1=0, wrist_2=0, wrist_3=+45)

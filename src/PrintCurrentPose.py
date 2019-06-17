@@ -3,8 +3,10 @@
 import sys
 import rospy
 import moveit_commander
-from math import pi
+from math import pi, radians
 import random
+import tf2_ros
+from tf.transformations import *
 
 #Corobotsim's modules
 from pose_utils import poseUtilities
@@ -18,7 +20,7 @@ if __name__ == "__main__":
     #The "arm" planning group as described in coro.srdf represents the UR5
     move_group  = moveit_commander.MoveGroupCommander("manipulator")
 
-    poseUtils      = poseUtilities(rospy,move_group, WORLD_TO_BASE=(0,0,0), FLANGE_TO_FINGERTIP=0.04)
+    poseUtils      = poseUtilities(rospy,move_group, WORLD_TO_BASE=(0,0,0), FLANGE_TO_FINGERTIP=0.00)
 
     #Print the current pose
     pose = poseUtils.printCurrentPose()
