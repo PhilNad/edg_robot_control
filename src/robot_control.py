@@ -1,8 +1,7 @@
 #This modules manages the movements of the simulated robot
 #through MoveIt and the Gripper Service.
 
-from os import system
-from os import popen
+from os import popen, system
 from pose_utils import poseUtilities
 from math import pi, radians
 from std_msgs.msg import UInt8
@@ -26,10 +25,7 @@ class robControl:
         self.move_group.stop()
         self.move_group.clear_pose_targets()
 
-    # Takes a positional parameter where (for 2f-85)
-    # 0   = fully opened
-    # 180 = fully closed
-    # and asynchronously sets the gripper opening/closing
+
     def set_gripper_closing(self, motor1_position, motor2_position):
         print("Motor 1 position requested: "+str(motor1_position))
         print("Motor 2 position requested: "+str(motor2_position))

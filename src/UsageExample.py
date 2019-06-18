@@ -78,9 +78,6 @@ if __name__ == "__main__":
     #Remove old collision objects from the planning scene
     sceneMan.clear()
 
-    #Add a reference frame for our attached tool
-    #addToolReferenceFrame(offset_from_flange=(0,0,0.1))
-
     #Add the table under the robot in the scene so MoveIt is aware of it.
     #Table length = 60 in., Table depth = 30 in., Table height = 36.25 in.
     #Position vectors pretty much always describes (X,Y,Z) in this order.
