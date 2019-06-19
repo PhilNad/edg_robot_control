@@ -25,31 +25,6 @@ class robControl:
         self.move_group.stop()
         self.move_group.clear_pose_targets()
 
-
-    def set_gripper_closing(self, motor1_position, motor2_position):
-        print("Motor 1 position requested: "+str(motor1_position))
-        print("Motor 2 position requested: "+str(motor2_position))
-        command = "rosservice call /fingers/set_position "+str(int(motor1_position))+" "+str(int(motor1_position))
-        system(command)
-
-    #Command the gripper's opening relative to current opening
-    def set_relative_gripper_closing(self, delta_motor1_position=0,  delta_motor2_position=0):
-        #Get current position from the appropriate ROS topics
-        #This does not involve subscribing to a topic...
-        #Dont ask for a stream if you only need a single drop
-        m1_pos_cmd = "rostopic echo -n 1 /fingers/1/position | head -n 1 | sed 's/data: //'"
-        m2_pos_cmd = "rostopic echo -n 1 /fingers/2/position | head -n 1 | sed 's/data: //'"
-
-        current_m1_pos = int(popen(m1_pos_cmd).read())
-        current_m2_pos = int(popen(m2_pos_cmd).read())
-
-        #Add the relative position to current's
-        goal_m1_pos = current_m1_pos + delta_motor1_position
-        goal_m2_pos = current_m2_pos + delta_motor2_position
-
-        #Set the corresponding position
-        self.set_gripper_closing(goal_m1_pos, goal_m2_pos)
-
     #Moves the orientation of the wrist relative to its current position.
     def goRelOrientation(self, wrist_1=0, wrist_2=0, wrist_3=0):
         joint_goal = self.move_group.get_current_joint_values()

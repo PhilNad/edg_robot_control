@@ -23,44 +23,6 @@ def MM_TO_M(measure_in_millimeters):
 def INCHES_TO_M(measure_in_inches):
     return 0.0254*measure_in_inches
 
-#Add the four walls of a rectangular water tank as collision objects.
-#The sides of the tank must be parallel to the reference frame.
-#Dx is the distance from the robot base frame to the nearest corner of the tank
-#when following the +X direction. Lx is the length of the water tank from that
-#corner in the +X direction.
-#Dy is the distance from the robot base frame to the nearest corner of the tank
-#when following the +Y direction. Ly is the length of the water tank from that
-#corner in the +Y direction.
-#Dz is the distance from the robot base frame to the nearest corner of the tank
-#when following the +Z direction. Lz is the length of the water tank from that
-#corner in the +Z direction.
-def addWaterTank(Dx, Dy, Dz, Lx, Ly, Lz):
-    thickness = 0.01
-    c1_size = (abs(Lx), thickness, abs(Lz))
-    c2_size = (thickness, abs(Ly), abs(Lz))
-    c3_size = (abs(Lx), thickness, abs(Lz))
-    c4_size = (thickness, abs(Ly), abs(Lz))
-
-    if(Lx == 0 or Ly == 0 or Lz == 0):
-        print("ERROR: A length cannot be zero.")
-        return
-
-    sign_x = Lx/abs(Lx)
-    sign_y = Ly/abs(Ly)
-    sign_z = Lz/abs(Lz)
-
-    c1_position = (Dx+Lx/2,                  Dy+sign_y*thickness/2,     Dz+Lz/2)
-    c4_position = (Dx+sign_x*thickness/2,    Dy+Ly/2,                   Dz+Lz/2)
-    c3_position = (Dx+Lx/2,                  Dy+Ly-sign_y*thickness/2,  Dz+Lz/2)
-    c2_position = (Dx+Lx-sign_x*thickness/2, Dy+Ly/2,                   Dz+Lz/2)
-
-    random_integer = str(random.randint(1,1000))
-    sceneMan.addBoxToMoveit(random_integer+"_c1",c1_position, c1_size)
-    sceneMan.addBoxToMoveit(random_integer+"_c2",c2_position, c2_size)
-    sceneMan.addBoxToMoveit(random_integer+"_c3",c3_position, c3_size)
-    sceneMan.addBoxToMoveit(random_integer+"_c4",c4_position, c4_size)
-
-
 if __name__ == "__main__":
     #Initialization
     moveit_commander.roscpp_initialize(sys.argv)
@@ -99,24 +61,16 @@ if __name__ == "__main__":
     sceneMan.addBoxToMoveit("small_table",small_table_position, small_table_size)
 
     #Add the water tank on top of the big table
-    addWaterTank(Dx=INCHES_TO_M(-15), Dy=0, Dz=INCHES_TO_M(-0.5), Lx=INCHES_TO_M(-20), Ly=INCHES_TO_M(-10), Lz=INCHES_TO_M(12.5))
+    sceneMan.addWaterTank(Dx=INCHES_TO_M(-15), Dy=0, Dz=INCHES_TO_M(-0.5), Lx=INCHES_TO_M(-20), Ly=INCHES_TO_M(-10), Lz=INCHES_TO_M(12.5))
 
     #Add the water tank on top of the small table
-    addWaterTank(Dx=INCHES_TO_M(14), Dy=INCHES_TO_M(9), Dz=INCHES_TO_M(-7.5), Lx=INCHES_TO_M(12), Ly=INCHES_TO_M(-24), Lz=INCHES_TO_M(17))
+    sceneMan.addWaterTank(Dx=INCHES_TO_M(14), Dy=INCHES_TO_M(9), Dz=INCHES_TO_M(-7.5), Lx=INCHES_TO_M(12), Ly=INCHES_TO_M(-24), Lz=INCHES_TO_M(17))
 
     #Add a wall to protect the user sitting in front of the computer
     wall_size = (3,0.01,3)
     wall_position = (0,0.9,0)
     sceneMan.addBoxToMoveit("wall",wall_position, wall_size)
 
-    #Request the fingers to go to a specific position
-    robot.set_gripper_closing(100,100)
-
-    #Request a RELATIVE position
-    robot.set_relative_gripper_closing(100,100)
-
-    #Re-initialize the fingers position
-    robot.set_gripper_closing(0,0)
 
     #Go to the initial position
     # To generate these lines of code, move manually to the desired initial

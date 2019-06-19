@@ -1,4 +1,4 @@
-# This modules manages the simulated Gazebo scene
+# This modules manages the virtual MoveIt scene
 # by adding, removing or modifying objects
 
 from copy import deepcopy
@@ -35,3 +35,40 @@ class sceneManager:
 
         print("Objects added to MoveIt planning scene:")
         print(self.moveit_scene.get_known_object_names())
+
+    #Add the four walls of a rectangular water tank as collision objects.
+    #The sides of the tank must be parallel to the reference frame.
+    #Dx is the distance from the robot base frame to the nearest corner of the tank
+    #when following the +X direction. Lx is the length of the water tank from that
+    #corner in the +X direction.
+    #Dy is the distance from the robot base frame to the nearest corner of the tank
+    #when following the +Y direction. Ly is the length of the water tank from that
+    #corner in the +Y direction.
+    #Dz is the distance from the robot base frame to the nearest corner of the tank
+    #when following the +Z direction. Lz is the length of the water tank from that
+    #corner in the +Z direction.
+    def addWaterTank(Dx, Dy, Dz, Lx, Ly, Lz):
+        thickness = 0.01
+        c1_size = (abs(Lx), thickness, abs(Lz))
+        c2_size = (thickness, abs(Ly), abs(Lz))
+        c3_size = (abs(Lx), thickness, abs(Lz))
+        c4_size = (thickness, abs(Ly), abs(Lz))
+
+        if(Lx == 0 or Ly == 0 or Lz == 0):
+            print("ERROR: A length cannot be zero.")
+            return
+
+        sign_x = Lx/abs(Lx)
+        sign_y = Ly/abs(Ly)
+        sign_z = Lz/abs(Lz)
+
+        c1_position = (Dx+Lx/2,                  Dy+sign_y*thickness/2,     Dz+Lz/2)
+        c4_position = (Dx+sign_x*thickness/2,    Dy+Ly/2,                   Dz+Lz/2)
+        c3_position = (Dx+Lx/2,                  Dy+Ly-sign_y*thickness/2,  Dz+Lz/2)
+        c2_position = (Dx+Lx-sign_x*thickness/2, Dy+Ly/2,                   Dz+Lz/2)
+
+        random_integer = str(random.randint(1,1000))
+        self.addBoxToMoveit(random_integer+"_c1",c1_position, c1_size)
+        self.addBoxToMoveit(random_integer+"_c2",c2_position, c2_size)
+        self.addBoxToMoveit(random_integer+"_c3",c3_position, c3_size)
+        self.addBoxToMoveit(random_integer+"_c4",c4_position, c4_size)
