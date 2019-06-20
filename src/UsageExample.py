@@ -6,13 +6,12 @@ import moveit_commander
 from math import pi
 import random
 import geometry_msgs.msg
+from geometry_msgs.msg import Pose
 
-#Corobotsim's modules
+#edg_robot_control's modules
 from scene_manager import sceneManager
 from robot_control import robControl
 
-from geometry_msgs.msg import Pose
-from geometry_msgs.msg import PoseStamped
 
 def INCHES_TO_MM(measure_in_inches):
     return 25.4*measure_in_inches
@@ -28,7 +27,7 @@ if __name__ == "__main__":
     moveit_commander.roscpp_initialize(sys.argv)
     rospy.init_node('edg_test', anonymous=True)
 
-    #The "arm" planning group as described in coro.srdf represents the UR5
+    #The "manipulator" planning group as described in the SRDF represents the UR10
     move_group  = moveit_commander.MoveGroupCommander("manipulator")
 
     #Manages the objects in the scene

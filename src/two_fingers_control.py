@@ -2,7 +2,9 @@
 # accurately control the fingers
 
 import sys
+import rospy
 from os import popen, system
+from edg_fingers_control.srv import *
 
 class twoFingersController:
     #Constructor speeds and timing are to be found experimentally and vary
@@ -12,12 +14,16 @@ class twoFingersController:
         self.closing_speed = closing_speed
         self.smallest_time = smallest_time
         self.largest_gap   = largest_gap
+        #This generated a function that we can use that basically uses the
+        #service transparently.
+        self.set_position = rospy.ServiceProxy('/fingers/set_position', SetPosition)
 
     #This function creates a Linux command that sends a request to the service
     #which is responsible of sending commands to the fingers.
     def set_gripper_closing(self, motor1_position, motor2_position):
-        print("Motor 1 position requested: "+str(motor1_position))
-        print("Motor 2 position requested: "+str(motor2_position))
+        #print("Motor 1 position requested: "+str(motor1_position))
+        #print("Motor 2 position requested: "+str(motor2_position))
+        #self.set_position(motor1_position, motor2_position)
         command = "rosservice call /fingers/set_position "+str(int(motor1_position))+" "+str(int(motor2_position))
         system(command)
 
@@ -102,21 +108,25 @@ class twoFingersController:
         #Number of ticks we want to move the fingers at every iteration.
         command_amplitude = self.smallest_time
 
+        (m1_pos, m2_pos) = self.get_fingers_position()
+        print("Goal M1: "+str(m1_goal_pos))
+        print("Goal M2: "+str(m2_goal_pos))
+
         while True:
             command_m1 = 0
             command_m2 = 0
 
             #Get current position of the fingers
             (m1_pos, m2_pos) = self.get_fingers_position()
-            print("Current M1: "+str(m1_pos))
-            print("Current M2: "+str(m2_pos))
+            #print("Current M1: "+str(m1_pos))
+            #print("Current M2: "+str(m2_pos))
 
             #Difference between our goal position and our current
             delta_m1 = m1_goal_pos - m1_pos
             delta_m2 = m2_goal_pos - m2_pos
 
-            print("Delta M1: "+str(delta_m1))
-            print("Delta M2: "+str(delta_m2))
+            #print("Delta M1: "+str(delta_m1))
+            #print("Delta M2: "+str(delta_m2))
 
             #If its positive, it means we need to close the finger.
             #if its negative, we need to open it.
@@ -137,6 +147,8 @@ class twoFingersController:
                 self.set_gripper_closing(command_m1, command_m2)
             else:
                 #If both commands are zero, it means we are done.
+                print("Final M1: "+str(m1_pos))
+                print("Final M2: "+str(m2_pos))
                 return
 
     #Quick shortcut for the homing of the fingers
