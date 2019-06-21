@@ -9,6 +9,18 @@
 
 	<!-- This starts the Robotiq's program that publishes the Force/Torque readings. -->
 	<node pkg="robotiq_ft_sensor" type="rq_sensor" name="rq_sensor_node" output="screen" args="$(arg forceTorqueTTY)" />
+ <!-- Each of the following nodes are extracting a single field out of a complex message and is publishing the result onto a new topic.
+ 				This makes it easier to log this data without knowing the structure of the message type. See http://wiki.ros.org/topic_tools/transform
+				for more details. Note that in order for this to work, the topics must be previously created, which will probably not happen in the
+				first milliseconds of the robotiq_ft_sensor node being started. Therefore, the respawn=true and respawn_delay="5" parameters is added such as these nodes
+				will respawn upon failure with a delay of 5 seconds.
+  -->
+	<node pkg="topic_tools" type="transform" name="transform_node_x" args="/robotiq_ft_wrench/wrench /load_cell/x std_msgs/Float64 'm.force.x'" respawn="true" respawn_delay="5" />
+	<node pkg="topic_tools" type="transform" name="transform_node_y" args="/robotiq_ft_wrench/wrench /load_cell/y std_msgs/Float64 'm.force.y'" respawn="true" respawn_delay="5" />
+	<node pkg="topic_tools" type="transform" name="transform_node_z" args="/robotiq_ft_wrench/wrench /load_cell/z std_msgs/Float64 'm.force.z'" respawn="true" respawn_delay="5" />
+	<node pkg="topic_tools" type="transform" name="transform_node_mx" args="/robotiq_ft_wrench/wrench /load_cell/mx std_msgs/Float64 'm.torque.x'" respawn="true" respawn_delay="5" />
+	<node pkg="topic_tools" type="transform" name="transform_node_my" args="/robotiq_ft_wrench/wrench /load_cell/my std_msgs/Float64 'm.torque.y'" respawn="true" respawn_delay="5" />
+	<node pkg="topic_tools" type="transform" name="transform_node_mz" args="/robotiq_ft_wrench/wrench /load_cell/mz std_msgs/Float64 'm.torque.z'" respawn="true" respawn_delay="5" />
 
   <!-- This starts the driver that allow the computer to communicate with the robot. -->
 	<include file="$(find ur_modern_driver)/launch/ur10_bringup.launch">
