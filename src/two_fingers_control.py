@@ -16,7 +16,8 @@ class twoFingersController:
         self.largest_gap   = largest_gap
         #This generated a function that we can use that basically uses the
         #service transparently.
-        self.set_position = rospy.ServiceProxy('/fingers/set_position', SetPosition)
+        #Commented out because we are not using it
+        #self.set_position = rospy.ServiceProxy('/fingers/set_position', SetPosition)
 
     #This function creates a Linux command that sends a request to the service
     #which is responsible of sending commands to the fingers.
@@ -24,8 +25,8 @@ class twoFingersController:
         #print("Motor 1 position requested: "+str(motor1_position))
         #print("Motor 2 position requested: "+str(motor2_position))
         #self.set_position(motor1_position, motor2_position)
-        command = "rosservice call /fingers/set_position "+str(int(motor1_position))+" "+str(int(motor2_position))
-        system(command)
+        command     = "rosservice call /fingers/set_position "+str(int(motor1_position))+" "+str(int(motor2_position))
+        response    = str(popen(command).read())[:-1]
 
     #If you want to open the fingers for a number of encoder ticks,
     #this function tells you the command you should send to the speed controller
@@ -72,6 +73,30 @@ class twoFingersController:
         if (ms % 2) != 0:
             ms -= 1
         return ms
+
+    #This is a version of move_fingers but only for finger 1
+    #See the definition of function move_fingers(ticks) for more details.
+    def move_finger1(self, ticks):
+        #A negative number of ticks means that we want to open the fingers
+        #and a positive number of ticks means that we want to close them
+        ms = 0
+        if(ticks < 0):
+            ms = self.open_fingers(abs(ticks))
+        else:
+            ms = self.close_fingers(abs(ticks))
+        self.set_gripper_closing(ms,0)
+
+    #This is a version of move_fingers but only for finger 2
+    #See the definition of function move_fingers(ticks) for more details.
+    def move_finger2(self, ticks):
+        #A negative number of ticks means that we want to open the fingers
+        #and a positive number of ticks means that we want to close them
+        ms = 0
+        if(ticks < 0):
+            ms = self.open_fingers(abs(ticks))
+        else:
+            ms = self.close_fingers(abs(ticks))
+        self.set_gripper_closing(0,ms)
 
     #This function calculates finds the command that needs to be sent so
     #that the fingers RELATIVELY to our current position for a number of ticks

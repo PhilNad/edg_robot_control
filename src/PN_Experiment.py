@@ -53,7 +53,9 @@ def quick_notes():
     but it required the fingers to be partially closed:
 
     Exp #1: Initial depth = 0.7310 , Closure (350, 345)
-
+    Exp #4: Initial depth = 0.7300
+    Exp #6: Initial depth = 0.7300
+    Exp #7: Initial depth = 0.7294
     '''
     return
 
@@ -67,7 +69,7 @@ if __name__ == "__main__":
     #Manages robot's movements
     robot           = robControl(rospy, move_group)
     #Manages fingers movements
-    fingersControl  = twoFingersController(opening_speed=1.7, closing_speed=1.42, smallest_time=20, largest_gap=10)
+    fingersControl  = twoFingersController(opening_speed=1.7, closing_speed=1.42, smallest_time=20, largest_gap=20)
 
     #Depth values relative to the current depth
     depth_values    = [0, 0.01, 0.02, 0.03]
@@ -76,7 +78,7 @@ if __name__ == "__main__":
                         [425, 525, 625, 725, 825],
                         [450, 550, 650, 750, 850],
                         [475, 575, 675, 775, 875],
-                        [500, 600, 700, 700, 900] ]
+                        [500, 600, 700, 800, 900] ]
 
     #High-level algorithm
     #1) Lower the arm to Z (4 different values)
@@ -85,9 +87,6 @@ if __name__ == "__main__":
     #4) Stop logging
     #5) Go to #1
 
-    #Move to the minimal closing value in our list so the fingertips are deeper
-    #in the water and that gives us more room in terms of depth so the air dont
-    #enter the tubes.
     fingersControl.adjust_position(min(min(closing_values)), min(min(closing_values)))
 
     counter = 0
@@ -96,20 +95,25 @@ if __name__ == "__main__":
 
         #Dont forget that this command is RELATIVE
         robot.goRelPosition(goal_pos_rel=(0,0,depth-previous_depth))
+        previous_depth = depth
+
+        #Move to the minimal closing value in our list so the fingertips are deeper
+        #in the water and that gives us more room in terms of depth so the air dont
+        #enter the tubes.
+        fingersControl.adjust_position(min(min(closing_values)), min(min(closing_values)))
 
         this_depth_closing_values = closing_values[counter]
-        for finger1_closing in this_depth_closing_values:
-            for finger2_closing in this_depth_closing_values:
+        finger1_closing = this_depth_closing_values[2]
+        finger2_closing = this_depth_closing_values[2]
 
-                filename = start_logging()
+        filename = start_logging()
+        fingersControl.adjust_position(finger1_closing, finger2_closing)
+        stop_logging()
 
-                #Move to the goal position
-                fingersControl.adjust_position(finger1_closing, finger2_closing)
+        new_filename = filename.replace(".csv","_"+str(depth)+"_"+str(finger1_closing)+"_"+str(finger2_closing)+".csv")
+        rename(filename, new_filename)
+        print("Data logged to "+new_filename)
 
-                stop_logging()
-
-                new_filename = filename.replace(".csv","_"+str(depth)+"_"+str(finger1_closing)+"_"+str(finger2_closing)+".csv")
-                rename(filename, new_filename)
-                print("Data logged to "+new_filename)
-        fingersControl.adjust_position(min(min(closing_values)), min(min(closing_values)))
         counter += 1
+
+    fingersControl.adjust_position(min(min(closing_values)), min(min(closing_values)))
