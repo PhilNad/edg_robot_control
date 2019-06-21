@@ -14,7 +14,8 @@
   <build_export_depend>std_msgs</build_export_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>std_msgs</exec_depend>
-
+  <exec_depend>rqt_multiplot</exec_depend>
+  <exec_depend>rq_sensor</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
