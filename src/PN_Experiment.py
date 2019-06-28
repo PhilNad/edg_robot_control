@@ -68,17 +68,16 @@ if __name__ == "__main__":
     move_group  = moveit_commander.MoveGroupCommander("manipulator")
     #Manages robot's movements
     robot           = robControl(rospy, move_group)
+
     #Manages fingers movements
     fingersControl  = twoFingersController(opening_speed=1.7, closing_speed=1.42, smallest_time=20, largest_gap=20)
 
     #Depth values relative to the current depth
-    depth_values    = [0, 0.01, 0.02, 0.03]
-    #Each depth has its set of closing values
-    closing_values  = [ [400, 500, 600, 700, 800],
-                        [425, 525, 625, 725, 825],
-                        [450, 550, 650, 750, 850],
-                        [475, 575, 675, 775, 875],
-                        [500, 600, 700, 800, 900] ]
+    depth_values    = [0.75, 0.76, 0.77, 0.78]
+    #Closing values
+    maximal_closing = [800, 800, 800, 800]
+    #Goal pressure percentage values
+    goal_pressure   = [0.3, 0.4, 0.5, 0.6, 0.7]
 
     #High-level algorithm
     #1) Lower the arm to Z (4 different values)
@@ -87,7 +86,40 @@ if __name__ == "__main__":
     #4) Stop logging
     #5) Go to #1
 
-    fingersControl.adjust_position(min(min(closing_values)), min(min(closing_values)))
+    #fingersControl  = twoFingersController(opening_speed=1.7, closing_speed=1.42, smallest_time=10, largest_gap=10)
+    #fingersControl.adjust_position(0, 0)
+    #exit()
+
+    #Bias and maximum of the output of each transducer
+    M1_offset_pressure  = 285
+    M1_maximal_pressure = 420
+    M2_offset_pressure  = 362
+    M2_maximal_pressure = 420
+
+    #Move to the initial Z position
+    current_pose = move_group.get_current_pose().pose
+    current_pose.position.z = 0.77
+    robot.goPose(current_pose)
+
+    filename = start_logging()
+
+    #Close the fingers
+    fingersControl  = twoFingersController(opening_speed=1.7, closing_speed=1.42, smallest_time=16, largest_gap=16)
+    fingersControl.adjust_position(400, 0)
+    goal_pressure_M1 = 0.5*(M1_maximal_pressure-M1_offset_pressure) + M1_offset_pressure
+    goal_pressure_M2 = 0.5*(M2_maximal_pressure-M2_offset_pressure) + M2_offset_pressure
+    fingersControl.close_until_pressure(goal_pressure_M1, goal_pressure_M2, 800)
+
+    #Open the fingers
+    fingersControl  = twoFingersController(opening_speed=1.7, closing_speed=1.42, smallest_time=10, largest_gap=10)
+    fingersControl.adjust_position(0, 0)
+
+    stop_logging()
+    new_filename = filename.replace(".csv","_"+str(current_pose.position.z)+".csv")
+    rename(filename, new_filename)
+    print("Data logged to "+new_filename)
+
+    exit()
 
     counter = 0
     previous_depth = 0

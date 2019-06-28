@@ -5,7 +5,7 @@
 	<arg name="robot_ip" default="10.0.0.1" />
 	<!-- This is the File Descriptor associated with the Robotiq FT sensor.
 				It can be found by running this command: "dmesg | grep FTDI | tail" -->
-	<arg name="forceTorqueTTY" default="/dev/ttySB0" />
+	<arg name="forceTorqueTTY" default="/dev/ttyUSB0" />
 
 	<!-- This starts the Robotiq's program that publishes the Force/Torque readings. -->
 	<node pkg="robotiq_ft_sensor" type="rq_sensor" name="rq_sensor_node" output="screen" args="$(arg forceTorqueTTY)" />

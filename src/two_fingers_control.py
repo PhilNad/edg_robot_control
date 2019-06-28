@@ -122,6 +122,46 @@ class twoFingersController:
 
         return (current_m1_pos,current_m2_pos)
 
+    #This function returns the average pressure of the last 100 data points
+    def get_mean_pressure(self):
+        m1_cmd = "rostopic echo -n 1 /fingers/1/meanpressure | head -n 1 | sed 's/data: //'"
+        m2_cmd = "rostopic echo -n 1 /fingers/2/meanpressure | head -n 1 | sed 's/data: //'"
+
+        m1_mean_pre = int(popen(m1_cmd).read())
+        m2_mean_pre = int(popen(m2_cmd).read())
+
+        return (m1_mean_pre, m2_mean_pre)
+
+    #This function adjust the position of the finger until the provided
+    #pressure is reached or until a maximum position is reached.
+    def close_until_pressure(self, goal_pressure_M1, goal_pressure_M2, limit_position):
+        #Number of ticks we want to move the fingers at every iteration.
+        command_amplitude   = self.smallest_time
+
+        print("Pressure Goal M1: "+str(goal_pressure_M1))
+        print("Pressure Goal M2: "+str(goal_pressure_M2))
+
+        while True:
+            command_m1 = 0
+            command_m2 = 0
+
+            (m1_pos, m2_pos)    = self.get_fingers_position()
+            (m1_pre, m2_pre)    = self.get_mean_pressure()
+
+            if m1_pos < limit_position and m1_pre < goal_pressure_M1:
+                command_m1 = self.close_fingers(command_amplitude)
+
+            if m2_pos < limit_position and m2_pre < goal_pressure_M2:
+                command_m2 = self.close_fingers(command_amplitude)
+
+            if command_m1 > 0 or command_m2 > 0:
+                self.set_gripper_closing(command_m1, command_m2)
+            else:
+                #If both commands are zero, it means we are done.
+                print("Final M1: "+str(m1_pos))
+                print("Final M2: "+str(m2_pos))
+                return
+
 
     #This function is meant to slowly adjust the position after an initial
     #approach move was done. Due to the large quantity of subsequent commands

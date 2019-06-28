@@ -5,6 +5,7 @@ from copy import deepcopy
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseStamped
 import time
+import random
 
 class sceneManager:
     #Constructor needs to receive a properly initialized rospy instance
@@ -47,7 +48,7 @@ class sceneManager:
     #Dz is the distance from the robot base frame to the nearest corner of the tank
     #when following the +Z direction. Lz is the length of the water tank from that
     #corner in the +Z direction.
-    def addWaterTank(Dx, Dy, Dz, Lx, Ly, Lz):
+    def addWaterTank(self, Dx, Dy, Dz, Lx, Ly, Lz):
         thickness = 0.01
         c1_size = (abs(Lx), thickness, abs(Lz))
         c2_size = (thickness, abs(Ly), abs(Lz))

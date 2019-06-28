@@ -75,20 +75,20 @@ if __name__ == "__main__":
     # To generate these lines of code, move manually to the desired initial
     # position, then use PrintCurrentPose.py
     pose = Pose()
-    pose.position.x = -0.420457239126
-    pose.position.y = 0.000219097839434
-    pose.position.z = 0.578732831099
-    pose.orientation.x = -0.706913700607
-    pose.orientation.y = 0.00577487605584
-    pose.orientation.z = 0.707256684653
-    pose.orientation.w = 0.00525858480106
+    pose.position.x = -0.604584730496
+    pose.position.y = 0.0620882525391
+    pose.position.z = 0.676920497329
+    pose.orientation.x = -0.369284079977
+    pose.orientation.y = 0.59791028242
+    pose.orientation.z = 0.364329464181
+    pose.orientation.w = 0.61106186592
     robot.goPose(pose)
 
     #Make a square in the air by moving along the axis of the world frame.
     robot.goRelPosition(goal_pos_rel=(-0.1,0,0))
-    robot.goRelPosition(goal_pos_rel=(0,0.1,0))
+    robot.goRelPosition(goal_pos_rel=(0,1,0))
     robot.goRelPosition(goal_pos_rel=(0.1,0,0))
-    robot.goRelPosition(goal_pos_rel=(0,-0.1,0))
+    robot.goRelPosition(goal_pos_rel=(0,-1,0))
 
     #Show off your orientation skills
     robot.goRelOrientation(wrist_1=-45, wrist_2=0, wrist_3=0)
