@@ -52,10 +52,6 @@ def quick_notes():
     This pose is the highest we can get before too much air enter through the barbs
     but it required the fingers to be partially closed:
 
-    Exp #1: Initial depth = 0.7310 , Closure (350, 345)
-    Exp #4: Initial depth = 0.7300
-    Exp #6: Initial depth = 0.7300
-    Exp #7: Initial depth = 0.7294
     '''
     return
 
@@ -74,8 +70,8 @@ if __name__ == "__main__":
 
     #Depth values relative to the current depth
     depth_values    = [0.75, 0.76, 0.77, 0.78]
-    #Closing values
-    maximal_closing = [800, 800, 800, 800]
+    #Maximum protective closing position
+    maximal_closing = 900
     #Goal pressure percentage values
     goal_pressure   = [0.3, 0.4, 0.5, 0.6, 0.7]
 
@@ -96,56 +92,50 @@ if __name__ == "__main__":
     M2_offset_pressure  = 362
     M2_maximal_pressure = 420
 
-    #Move to the initial Z position
-    current_pose = move_group.get_current_pose().pose
-    current_pose.position.z = 0.77
-    robot.goPose(current_pose)
-
-    filename = start_logging()
-
-    #Close the fingers
-    fingersControl  = twoFingersController(opening_speed=1.7, closing_speed=1.42, smallest_time=16, largest_gap=16)
-    fingersControl.adjust_position(400, 0)
-    goal_pressure_M1 = 0.5*(M1_maximal_pressure-M1_offset_pressure) + M1_offset_pressure
-    goal_pressure_M2 = 0.5*(M2_maximal_pressure-M2_offset_pressure) + M2_offset_pressure
-    fingersControl.close_until_pressure(goal_pressure_M1, goal_pressure_M2, 800)
-
-    #Open the fingers
-    fingersControl  = twoFingersController(opening_speed=1.7, closing_speed=1.42, smallest_time=10, largest_gap=10)
-    fingersControl.adjust_position(0, 0)
-
-    stop_logging()
-    new_filename = filename.replace(".csv","_"+str(current_pose.position.z)+".csv")
-    rename(filename, new_filename)
-    print("Data logged to "+new_filename)
-
-    exit()
-
-    counter = 0
-    previous_depth = 0
+    #For first test, overwrite the values, so we get 10 trials
+    depth_values    = [0.76, 0.77]
     for depth in depth_values:
+        for percent in goal_pressure:
+            goal_percent_M1 = percent
+            goal_percent_M2 = percent
 
-        #Dont forget that this command is RELATIVE
-        robot.goRelPosition(goal_pos_rel=(0,0,depth-previous_depth))
-        previous_depth = depth
+            #Move to the initial Z position
+            current_pose = move_group.get_current_pose().pose
+            current_pose.position.z = depth
+            robot.goPose(current_pose)
 
-        #Move to the minimal closing value in our list so the fingertips are deeper
-        #in the water and that gives us more room in terms of depth so the air dont
-        #enter the tubes.
-        fingersControl.adjust_position(min(min(closing_values)), min(min(closing_values)))
+            filename = start_logging()
 
-        this_depth_closing_values = closing_values[counter]
-        finger1_closing = this_depth_closing_values[2]
-        finger2_closing = this_depth_closing_values[2]
+            #Close the fingers
+            fingersControl  = twoFingersController(opening_speed=1.7, closing_speed=1.42, smallest_time=16, largest_gap=16)
+            fingersControl.adjust_position(400, 400)
+            goal_pressure_M1 = goal_percent_M1*(M1_maximal_pressure-M1_offset_pressure) + M1_offset_pressure
+            goal_pressure_M2 = goal_percent_M2*(M2_maximal_pressure-M2_offset_pressure) + M2_offset_pressure
+            fingersControl.close_until_pressure(goal_pressure_M1, goal_pressure_M2, 900)
 
-        filename = start_logging()
-        fingersControl.adjust_position(finger1_closing, finger2_closing)
-        stop_logging()
+            #Lift the pipe 4 centimeters up, 0.5 centimeter at a time in 8 steps
+            move_group.set_max_velocity_scaling_factor(0.1)
+            move_group.set_max_acceleration_scaling_factor(0.1)
+            
+            initial_pose = move_group.get_current_pose().pose
+            for i in range(1,9):
+                current_pose = move_group.get_current_pose().pose
+                current_pose.position.z = initial_pose.position.z + i*0.005
+                robot.goPose(current_pose)
 
-        new_filename = filename.replace(".csv","_"+str(depth)+"_"+str(finger1_closing)+"_"+str(finger2_closing)+".csv")
-        rename(filename, new_filename)
-        print("Data logged to "+new_filename)
+            #Return to original depth
+            current_pose = move_group.get_current_pose().pose
+            current_pose.position.z = depth
+            robot.goPose(current_pose)
 
-        counter += 1
+            move_group.set_max_velocity_scaling_factor(1)
+            move_group.set_max_acceleration_scaling_factor(1)
 
-    fingersControl.adjust_position(min(min(closing_values)), min(min(closing_values)))
+            #Open the fingers
+            fingersControl  = twoFingersController(opening_speed=1.7, closing_speed=1.42, smallest_time=10, largest_gap=10)
+            fingersControl.adjust_position(0, 0)
+
+            stop_logging()
+            new_filename = filename.replace(".csv","_"+str(depth)+"_"+str(goal_percent_M1)+"_"+str(goal_percent_M2)+".csv")
+            rename(filename, new_filename)
+            print("Data logged to "+new_filename)
