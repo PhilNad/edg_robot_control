@@ -21,11 +21,12 @@
 	<node pkg="topic_tools" type="transform" name="transform_node_mx" args="/robotiq_ft_wrench/wrench /load_cell/mx std_msgs/Float64 'm.torque.x'" respawn="true" respawn_delay="5" />
 	<node pkg="topic_tools" type="transform" name="transform_node_my" args="/robotiq_ft_wrench/wrench /load_cell/my std_msgs/Float64 'm.torque.y'" respawn="true" respawn_delay="5" />
 	<node pkg="topic_tools" type="transform" name="transform_node_mz" args="/robotiq_ft_wrench/wrench /load_cell/mz std_msgs/Float64 'm.torque.z'" respawn="true" respawn_delay="5" />
+	<node pkg="topic_tools" type="transform" name="transform_node_elbow" args="/joint_states /joint_position/elbow std_msgs/Float64 'm.position[2]'" respawn="true" respawn_delay="5" />
 
   <!-- This starts the driver that allow the computer to communicate with the robot. -->
 	<include file="$(find ur_modern_driver)/launch/ur10_bringup.launch">
 		<arg name="robot_ip" value="$(arg robot_ip)"/>
-		<arg name="use_lowbandwidth_trajectory_follower" value="true"/>
+		<arg name="use_lowbandwidth_trajectory_follower" value="false"/>
 	</include>
 
 	<!-- This start MoveIt which allows us to plan trajectories while avoiding collisions. -->
