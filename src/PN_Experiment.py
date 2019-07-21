@@ -90,6 +90,30 @@ def goto_depth(depth):
     for i in range(1,11):
         move_group.go(joint_values, wait=True)
 
+
+def get_variance(M1_offset_pressure, M2_offset_pressure, M1_maximal_pressure, M2_maximal_pressure):
+    command = "rostopic echo -n 200 /fingers/1/meanpressure | sed 's/data: //' | tr -d '-' | tr -s '\n'"
+    response = str(popen(command).read())
+    measures_array = response.split('\n')[:-1]
+    i=0
+    for m in measures_array:
+        m_percent = float(int(m)-M1_offset_pressure) / float(M1_maximal_pressure-M1_offset_pressure)
+        measures_array[i] = m_percent
+        i += 1
+    f1_var = np.var(measures_array)
+
+    command = "rostopic echo -n 200 /fingers/2/meanpressure | sed 's/data: //' | tr -d '-' | tr -s '\n'"
+    response = str(popen(command).read())
+    measures_array = response.split('\n')[:-1]
+    i=0
+    for m in measures_array:
+        m_percent = float(int(m)-M2_offset_pressure) / float(M2_maximal_pressure-M2_offset_pressure)
+        measures_array[i] = m_percent
+        i += 1
+    f2_var = np.var(measures_array)
+
+    return (f1_var, f2_var)
+
 if __name__ == "__main__":
     #Initialization
     moveit_commander.roscpp_initialize(sys.argv)
@@ -118,7 +142,6 @@ if __name__ == "__main__":
     #M2_offset_pressure  = 365 # Old: 362
     M2_maximal_pressure = 420 # Old: 420
 
-
     for depth in depth_values:
         for percent in goal_pressure:
             goal_percent_M1 = percent
@@ -141,16 +164,10 @@ if __name__ == "__main__":
             fingersControl.close_until_pressure(goal_pressure_M1, goal_pressure_M2, maximal_closing)
 
             #Allow a plateau to form and compute variance
-            f1_last_values = []
-            f2_last_values = []
-            for i in range(0,200):
-                #Getting these values takes time because of the way we are doing it
-                #Meaning that getting 200 values add quite a bit of time to the process (like 3 minutes)
-                (f1_mean_pre, f2_mean_pre) = fingersControl.get_mean_percent_pressure(M1_offset_pressure, M2_offset_pressure, M1_maximal_pressure, M2_maximal_pressure)
-                f1_last_values.append(f1_mean_pre)
-                f2_last_values.append(f2_mean_pre)
-            f1_var = np.var(f1_last_values)
-            f2_var = np.var(f2_last_values)
+            time.sleep(3)
+            (f1_var, f2_var) = get_variance(M1_offset_pressure, M2_offset_pressure, M1_maximal_pressure, M2_maximal_pressure)
+            print("F1 Variance: "+str(f1_var))
+            print("F2 Variance: "+str(f2_var))
 
 
             #Old: Lift the pipe 6 centimeters up, 0.5 centimeter at a time in 12 steps
@@ -158,16 +175,25 @@ if __name__ == "__main__":
             f1_previous = 0
             f2_previous = 0
             for i in range(0,8):
-                robot.goRelPosition(goal_pos_rel=(0,0,0.005))
                 (f1_mean_pre, f2_mean_pre) = fingersControl.get_mean_percent_pressure(M1_offset_pressure, M2_offset_pressure, M1_maximal_pressure, M2_maximal_pressure)
+                print("F1 Pressure: "+str(f1_mean_pre))
+                print("F2 Pressure: "+str(f2_mean_pre))
                 #The first time, we only record the percent pressure
                 if i > 0:
                     #Compute the absolute slope
                     f1_slope = abs(f1_mean_pre-f1_previous)
-                    f2_slope = abs(f1_mean_pre-f1_previous)
+                    f2_slope = abs(f2_mean_pre-f2_previous)
+                    print("F1 Slope: "+str(f1_slope))
+                    print("F2 Slope: "+str(f2_slope))
                     #Compute the minimum threshold slope
-                    f1_threshold = max(2*f1_var, -0.25*(f1_mean_pre**3)+0.475*(f1_mean_pre**2)-0.325*f1_mean_pre+0.1)
-                    f2_threshold = max(2*f2_var, -0.25*(f2_mean_pre**3)+0.475*(f2_mean_pre**2)-0.325*f2_mean_pre+0.1)
+                    f1_m = -0.25*(f1_mean_pre**3)+0.475*(f1_mean_pre**2)-0.325*f1_mean_pre+0.1
+                    f2_m = -0.25*(f2_mean_pre**3)+0.475*(f2_mean_pre**2)-0.325*f2_mean_pre+0.1
+                    print("F1 Min: "+str(f1_m))
+                    print("F2 Min: "+str(f2_m))
+                    f1_threshold = max(2*f1_var, f1_m)
+                    f2_threshold = max(2*f2_var, f2_m)
+                    print("F1 Threshold: "+str(f1_threshold))
+                    print("F2 Threshold: "+str(f2_threshold))
                     #Test the stopping condition
                     if (f1_slope > f1_threshold) and (f2_slope > f2_threshold):
                         print("Triggered stop condition.")
@@ -175,6 +201,8 @@ if __name__ == "__main__":
                         break;
                 f1_previous = f1_mean_pre
                 f2_previous = f2_mean_pre
+                #If the threshold is not reached, we pull further on the object
+                robot.goRelPosition(goal_pos_rel=(0,0,0.005))
 
             #Return to original depth
             goto_depth(depth)

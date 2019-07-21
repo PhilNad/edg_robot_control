@@ -125,8 +125,8 @@ class twoFingersController:
     #Returns the average pressure of the last 100 data points as a percent of the maximum.
     def get_mean_percent_pressure(self, m1_offset, m2_offset, m1_max, m2_max):
         (m1_mean_pre, m2_mean_pre) = self.get_mean_pressure()
-        m1_percent_pressure = (m1_mean_pre-m1_offset) / (m1_max-m1_offset)
-        m2_percent_pressure = (m2_mean_pre-m2_offset) / (m2_max-m2_offset)
+        m1_percent_pressure = float(m1_mean_pre-m1_offset) / float(m1_max-m1_offset)
+        m2_percent_pressure = float(m2_mean_pre-m2_offset) / float(m2_max-m2_offset)
         return (m1_percent_pressure, m2_percent_pressure)
 
     #This function returns the average pressure of the last 100 data points
