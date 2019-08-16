@@ -5,19 +5,32 @@ import sys
 import rospy
 from os import popen, system
 from edg_fingers_control.srv import *
+from std_msgs.msg import UInt16
 
 class twoFingersController:
     #Constructor speeds and timing are to be found experimentally and vary
     #with the mechanical setup used in the experiemnt.
-    def __init__(self, opening_speed=1.7, closing_speed=1.42, smallest_time=20, largest_gap=10):
+    def __init__(self, rospy_instance, opening_speed=1.7, closing_speed=1.42, smallest_time=20, largest_gap=10):
+        self.rospy         = rospy_instance
         self.opening_speed = opening_speed
         self.closing_speed = closing_speed
         self.smallest_time = smallest_time
         self.largest_gap   = largest_gap
-        #This generated a function that we can use that basically uses the
+        (self.f1_mean_pressure, self.f2_mean_pressure) = self.get_mean_pressure_slow()
+
+        rospy.Subscriber("/fingers/1/meanpressure", UInt16, self.f1_mean_pressure_callback)
+        rospy.Subscriber("/fingers/2/meanpressure", UInt16, self.f2_mean_pressure_callback)
+
+        #This generates a function that we can use that basically uses the
         #service transparently.
         #Commented out because we are not using it
         #self.set_position = rospy.ServiceProxy('/fingers/set_position', SetPosition)
+
+    def f1_mean_pressure_callback(self, msg):
+        self.f1_mean_pressure = int(msg.data)
+
+    def f2_mean_pressure_callback(self, msg):
+        self.f2_mean_pressure = int(msg.data)
 
     #This function creates a Linux command that sends a request to the service
     #which is responsible of sending commands to the fingers.
@@ -130,7 +143,7 @@ class twoFingersController:
         return (m1_percent_pressure, m2_percent_pressure)
 
     #This function returns the average pressure of the last 100 data points
-    def get_mean_pressure(self):
+    def get_mean_pressure_slow(self):
         m1_cmd = "rostopic echo -n 1 /fingers/1/meanpressure | head -n 1 | sed 's/data: //'"
         m2_cmd = "rostopic echo -n 1 /fingers/2/meanpressure | head -n 1 | sed 's/data: //'"
 
@@ -138,6 +151,10 @@ class twoFingersController:
         m2_mean_pre = int(popen(m2_cmd).read())
 
         return (m1_mean_pre, m2_mean_pre)
+
+    #Return last computed mean pressure for both fingers
+    def get_mean_pressure(self):
+        return (self.f1_mean_pressure, self.f2_mean_pressure)
 
     #This function adjust the position of the finger until the provided
     #pressure is reached or until a maximum position is reached.

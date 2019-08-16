@@ -32,63 +32,46 @@ def stop_logging():
     filename = str(popen(command).read())[:-1]
     return filename
 
-def quick_notes():
-    '''
-    Initial manual procedure:
-        1) Manually move the robot right above the 4-screws attach.
-        2) Screw the four screws so the robot holds the gripper
-        3) Remove the perpendicular resting alu. extrusions.
-        4) Close the fingers so the second phalanx barely touch the pipe
-        5) Take a note of the current height (Z axis about 0.7283) and the position
-            of the fingers (should be about 350)
-        6) Manually move the robot so the covered barbs are just a bit above the
-            water and the air begins to come in. Note the Z axis position at
-            that point, should be around 0.7786
-        7) Make sure the depth_values chosen in this program will respect the
-            previously found Z axis limits.
-        8) Make sure the closing values chosen in this program are relatively
-            sound.
+#If hardcoded=True, uses the hardcoded joint values to move into position.
+#If hardcoded=False, uses MoveIt to move the robot into position.
+def goto_depth(depth, hardcoded=False):
+    if hardcoded == True:
+        joint_values = []
+        joint_values_0745= [-0.5136469046222132, -1.9015186468707483, 1.675382137298584, -1.3438003698932093, -1.5816224257098597, 1.917220950126648]
+        joint_values_075 = [-0.503188435231344, -1.8894789854632776, 1.6585173606872559, -1.338740650807516, -1.5818622748004358, 1.9103862047195435]
+        joint_values_076 = [-0.5032003561602991, -1.8855255285846155, 1.6379127502441406, -1.322146240864889, -1.5816825071917933, 1.9105420112609863]
+        joint_values_077 = [-0.5074752012835901, -1.87579852739443, 1.613304615020752, -1.3076499144183558, -1.5814784208880823, 1.9068602323532104]
+        joint_values_078 = [-0.5033205191241663, -1.8770087401019495, 1.5958638191223145, -1.2886694113360804, -1.5816944281207483, 1.9109375476837158]
+        joint_values_079 = [-0.5075352827655237, -1.8737142721759241, 1.5754756927490234, -1.2721226851092737, -1.5815866629229944, 1.9074841737747192]
 
-    This pose is the lower we can get before the palm start touching the pipe:
-
-    This pose is the highest we can get before too much air enter through the barbs
-    but it required the fingers to be partially closed:
-
-    '''
-    return
-
-#Use the joint values, NOT MoveIt, to go to the absolute position
-def goto_depth(depth):
-    joint_values = []
-    joint_values_0745= [-0.5136469046222132, -1.9015186468707483, 1.675382137298584, -1.3438003698932093, -1.5816224257098597, 1.917220950126648]
-    joint_values_075 = [-0.503188435231344, -1.8894789854632776, 1.6585173606872559, -1.338740650807516, -1.5818622748004358, 1.9103862047195435]
-    joint_values_076 = [-0.5032003561602991, -1.8855255285846155, 1.6379127502441406, -1.322146240864889, -1.5816825071917933, 1.9105420112609863]
-    joint_values_077 = [-0.5033085981952112, -1.881392780934469, 1.6170082092285156, -1.305323902760641, -1.5816944281207483, 1.9107338190078735]
-    joint_values_078 = [-0.5033205191241663, -1.8770087401019495, 1.5958638191223145, -1.2886694113360804, -1.5816944281207483, 1.9109375476837158]
-    joint_values_079 = [-0.5075352827655237, -1.8737142721759241, 1.5754756927490234, -1.2721226851092737, -1.5815866629229944, 1.9074841737747192]
-
-    if depth == 0.745:
-        joint_values = joint_values_0745
-    else:
-        if depth == 0.75:
-            joint_values = joint_values_075
+        if depth == 0.745:
+            joint_values = joint_values_0745
         else:
-            if depth == 0.76:
-                joint_values = joint_values_076
+            if depth == 0.75:
+                joint_values = joint_values_075
             else:
-                if depth == 0.77:
-                    joint_values = joint_values_077
+                if depth == 0.76:
+                    joint_values = joint_values_076
                 else:
-                    if depth == 0.78:
-                        joint_values = joint_values_078
+                    if depth == 0.77:
+                        joint_values = joint_values_077
                     else:
-                        if depth == 0.79:
-                            joint_values = joint_values_079
+                        if depth == 0.78:
+                            joint_values = joint_values_078
                         else:
-                            exit()
-    #It seems that repeating the same command allow better precision
-    for i in range(1,11):
-        move_group.go(joint_values, wait=True)
+                            if depth == 0.79:
+                                joint_values = joint_values_079
+                            else:
+                                exit()
+        #It seems that repeating the same command allow better precision
+        for i in range(0,10):
+            move_group.go(joint_values, wait=True)
+    else:
+        current_pose = move_group.get_current_pose().pose
+        current_pose.position.z = depth
+        #It seems that repeating the same command allow better precision
+        for i in range(0,10):
+            robot.goPose(current_pose)
 
 
 def get_variance(M1_offset_pressure, M2_offset_pressure, M1_maximal_pressure, M2_maximal_pressure):
@@ -124,23 +107,24 @@ if __name__ == "__main__":
     robot           = robControl(rospy, move_group)
 
     #Manages fingers movements
-    fingersControl  = twoFingersController(opening_speed=1.7, closing_speed=1.42, smallest_time=20, largest_gap=20)
+    fingersControl  = twoFingersController(rospy, opening_speed=1.7, closing_speed=1.42, smallest_time=16, largest_gap=16)
 
     #Depth values relative to the current depth
-    depth_values    = [0.79]
+    depth_values    = [0.77]
     #Maximum protective closing position
     maximal_closing = 900
     #Goal pressure percentage values
-    goal_pressure   = [0.2, 0.3, 0.4, 0.5, 0.6]
+    goal_pressure   = [0.2,0.3,0.4,0.5,0.6]
 
     approach_distance = 200 #Old: 400
 
     #Bias and maximum of the output of each transducer
     #It seems that this changes sometimes...better verify often their values
     #M1_offset_pressure  = 346 # Old: 285
-    M1_maximal_pressure = 420 # Old: 420
+    M1_maximal_pressure = 425 # Old: 420
     #M2_offset_pressure  = 365 # Old: 362
-    M2_maximal_pressure = 420 # Old: 420
+    M2_maximal_pressure = 425 # Old: 420
+
 
     for depth in depth_values:
         for percent in goal_pressure:
@@ -157,7 +141,6 @@ if __name__ == "__main__":
             filename = start_logging()
 
             #Close the fingers
-            fingersControl  = twoFingersController(opening_speed=1.7, closing_speed=1.42, smallest_time=16, largest_gap=16)
             fingersControl.adjust_position(approach_distance, approach_distance)
             goal_pressure_M1 = goal_percent_M1*(M1_maximal_pressure-M1_offset_pressure) + M1_offset_pressure
             goal_pressure_M2 = goal_percent_M2*(M2_maximal_pressure-M2_offset_pressure) + M2_offset_pressure
@@ -165,21 +148,36 @@ if __name__ == "__main__":
 
             #Allow a plateau to form and compute variance
             time.sleep(3)
-            (f1_var, f2_var) = get_variance(M1_offset_pressure, M2_offset_pressure, M1_maximal_pressure, M2_maximal_pressure)
-            print("F1 Variance: "+str(f1_var))
-            print("F2 Variance: "+str(f2_var))
+            #(f1_var, f2_var) = get_variance(M1_offset_pressure, M2_offset_pressure, M1_maximal_pressure, M2_maximal_pressure)
+            #print("F1 Variance: "+str(f1_var))
+            #print("F2 Variance: "+str(f2_var))
 
 
             #Old: Lift the pipe 6 centimeters up, 0.5 centimeter at a time in 12 steps
             #Old: Lift the pipe 4 centimeters up, 0.5 centimeter at a time in 8 steps
+            #New: Lift the pipe 4 centimeters up in a continuous motion by going at 1% of the max velocity
+            move_group.set_max_velocity_scaling_factor(0.01)
+
+            #Continuous motion
+            robot.goRelPosition(goal_pos_rel=(0,0,0.04), sync=True)
+            #Intermittent motion
+            #for steps_counter in range(0,8):
+            #    robot.goRelPosition(goal_pos_rel=(0,0,0.005), sync=True)
+
+            #Real-time control stuff below, deprecated
+            '''start   = time.time()
+            current = time.time()
             f1_previous = 0
             f2_previous = 0
-            for i in range(0,8):
+
+            #for steps_counter in range(0,8)
+            steps_counter = 0
+            while current - start < 10:
                 (f1_mean_pre, f2_mean_pre) = fingersControl.get_mean_percent_pressure(M1_offset_pressure, M2_offset_pressure, M1_maximal_pressure, M2_maximal_pressure)
-                print("F1 Pressure: "+str(f1_mean_pre))
-                print("F2 Pressure: "+str(f2_mean_pre))
+                #print("F1 Pressure: "+str(f1_mean_pre))
+                #print("F2 Pressure: "+str(f2_mean_pre))
                 #The first time, we only record the percent pressure
-                if i > 0:
+                if steps_counter > 0:
                     #Compute the absolute slope
                     f1_slope = abs(f1_mean_pre-f1_previous)
                     f2_slope = abs(f2_mean_pre-f2_previous)
@@ -197,18 +195,25 @@ if __name__ == "__main__":
                     #Test the stopping condition
                     if (f1_slope > f1_threshold) and (f2_slope > f2_threshold):
                         print("Triggered stop condition.")
+                        #Continuous:
+                        #robot.stop()
                         time.sleep(3)
                         break;
+                #Arbitrary sample frequency
+                time.sleep(0.5)
+                current = time.time()
+                steps_counter += 1
                 f1_previous = f1_mean_pre
                 f2_previous = f2_mean_pre
                 #If the threshold is not reached, we pull further on the object
-                robot.goRelPosition(goal_pos_rel=(0,0,0.005))
+                #Continuous: Remove below line
+                #robot.goRelPosition(goal_pos_rel=(0,0,0.005))'''
 
             #Return to original depth
+            robot.stop()
             goto_depth(depth)
 
             #Open the fingers
-            fingersControl  = twoFingersController(opening_speed=1.7, closing_speed=1.42, smallest_time=20, largest_gap=20)
             fingersControl.adjust_position(0, 0)
 
             stop_logging()

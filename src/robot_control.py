@@ -55,3 +55,5 @@ class robControl:
         #Execute the plan if one was found
         res = self.move_group.execute(plan,wait=sync)
         print('Execution returned:'+str(res))
+        if(res == False):
+            raise RobotMovementFailed
